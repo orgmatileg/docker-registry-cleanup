@@ -56,7 +56,7 @@ then
 fi
 
 # Get list of repositories
-REPOS=$(curl -s -H 'accept: application/json' -u "${USER}:${PASSWORD}" https://${REGISTRY}/v2/_catalog | jq -r .repositories[])
+REPOS=$(curl -s -H 'accept: application/json' -u "${USER}:${PASSWORD}" ${REGISTRY}/v2/_catalog | jq -r .repositories[])
 
 if [ "$DEBUG" = "true" ]; then
   echo "REPOS: $REPOS"
@@ -70,7 +70,7 @@ do
   fi
 
   # Get list of tags
-  TAGS_RESP=$(curl -H 'accept: application/json' -u "${USER}:${PASSWORD}" https://${REGISTRY}/v2/${REPO}/tags/list)
+  TAGS_RESP=$(curl -H 'accept: application/json' -u "${USER}:${PASSWORD}" ${REGISTRY}/v2/${REPO}/tags/list)
   TAGS=$(echo $TAGS_RESP | jq -r .tags[] || continue)
 
   if [ "$DEBUG" = "true" ]; then
@@ -92,7 +92,7 @@ do
     fi
 
     # Get the image's creation date
-    CREATED_AT=$(curl -s -H 'accept: application/json' -u "${USER}:${PASSWORD}" https://${REGISTRY}/v2/${REPO}/manifests/${TAG} | jq -r .history[0].v1Compatibility | jq -r .created )
+    CREATED_AT=$(curl -s -H 'accept: application/json' -u "${USER}:${PASSWORD}" ${REGISTRY}/v2/${REPO}/manifests/${TAG} | jq -r .history[0].v1Compatibility | jq -r .created )
 
     if [ "$DEBUG" = "true" ]; then
       echo "CREATED_AT: $CREATED_AT"
@@ -118,12 +118,12 @@ do
     # If the image is older than the cutoff, delete it
     if [ "$DAYS_OLD" -gt "$CUTOFF_DAYS" ]; then
       echo "Deleting image $REPO:$TAG which is $DAYS_OLD days old."
-      DIGEST=$(curl -I -s -u "${USER}:${PASSWORD}" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" https://${REGISTRY}/v2/${REPO}/manifests/${TAG} | grep docker-content-digest | awk '{print $2}')
+      DIGEST=$(curl -I -s -u "${USER}:${PASSWORD}" -H "Accept: application/vnd.docker.distribution.manifest.v2+json" ${REGISTRY}/v2/${REPO}/manifests/${TAG} | grep docker-content-digest | awk '{print $2}')
       DIGEST_TRIMMED=$(trim $DIGEST)
       if [ "$DEBUG" = "true" ]; then
         echo "DIGEST: $DIGEST_TRIMMED"
       fi
-      curl -u "${USER}:${PASSWORD}" -X DELETE https://$REGISTRY/v2/$REPO/manifests/$DIGEST_TRIMMED
+      curl -u "${USER}:${PASSWORD}" -X DELETE $REGISTRY/v2/$REPO/manifests/$DIGEST_TRIMMED
     else
       echo "There is no image older than $CUTOFF_DAYS day"
     fi
